@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Shivraj Nesargi",
+  "author": "Prashant Patel, Preethi Sekrahan",
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.1",

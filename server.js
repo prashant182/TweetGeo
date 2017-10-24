@@ -1,4 +1,4 @@
-var PORT=8080;
+var PORT=9090;
 
 var express=require('express');
 var app=express();
@@ -12,7 +12,6 @@ var elasticsearch=require('elasticsearch');
 var awsEs=require('http-aws-es');
 var globalSocket;
 
-//Configuring the twitter credentials(Loading environment variables from .env file)
 var twitterCredentials =new twitter({
 consumer_key:process.env.consumer_key,
 consumer_secret:process.env.consumer_secret,
@@ -20,57 +19,49 @@ access_token_key:process.env.access_token_key,
 access_token_secret:process.env.access_token_secret
 });
 
-//Configuring the AWS Elastic Search Credentials(Loading environment variables from .env file)
 var es=new elasticsearch.Client({
-  hosts: 'https://search-twitter-geo-c7a6z4j6pegnm7npsevbq5snqu.us-east-2.es.amazonaws.com/',
+  hosts: 'https://search-twittgeomap-ypzp2iuhftcde7pkrd7vryjk3m.us-west-2.es.amazonaws.com/',
   connectionClass: awsEs,
   amazonES: {
-    region: 'us-east-2',
+    region: 'us-west-2',
     accessKey: process.env.aws_access_key_id,
     secretKey: process.env.aws_secret_access_key
 }
 });
 
 var stream=null;
-
 app.use(express.static("./public"));
-
 var item="Donald Trump";
 
 app.get("/:item",function(req,res){
 console.log(req.params.item);
 item=req.params.item;
  es.cluster.health({},function(err,resp,status) {  
-  console.log("-- Client Health --",resp);
+  console.log("-- Response--",resp);
 });
-
 
 if(item===null||item==="")
 {
 	item="Donald Trump";
-	console.log("Null Check");
+	console.log("Nothing is selected Trump will be selected by default");
 }
 });
 
 function emitTweets(latlong)
 {
   console.log("Emitting Tweets");
-  console.log(`The latitude and longitude are :${latlong}`)
+  console.log("The latitude and longitude are :${latlong}")
   globalSocket.emit("tweetStream", latlong);
 }
 
-setInterval(function()
-  {
-  es.indices.delete({index: 'tweets'},function(err,res,status) {  
-  console.log("delete",res);
-  });
-  }
-  ,10000);
+setInterval(function() {
+    console.log("We are logging the tweets")
+    }
+  ,1000);
 
-//Function to save tweets in Elastic Search
 function saveInEs(tweet,latlong)
 {
-  console.log("Saving in elasticsearch");
+  console.log("Saving Tweets in elasticsearch");
   var id=tweet.id_str;
   es.index({
     index: 'tweets',
@@ -86,7 +77,6 @@ function saveInEs(tweet,latlong)
   });
 }
 
-//Websockets to handle twitter streaming
 io.sockets.on('connection', function (socket) {
   globalSocket=socket;
   socket.on("start-streaming", function(item) {
@@ -135,18 +125,14 @@ io.sockets.on('connection', function (socket) {
       });
   	};
   });
-
   socket.on('error',function(error)
     {
       throw error;  
       io.connect(server, {
       'force new connection': true
       });
-
     });
 
     socket.emit("connected");
 });
-
-
-console.log("Listening on port: "+PORT);
+console.log("Port is : "+PORT);
